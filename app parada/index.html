@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Parada - Troca de Soleira</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gerdau: {
+                            blue: '#0047BB',     /* Azul Institucional */
+                            dark: '#002C76',     /* Azul Escuro */
+                            yellow: '#FFC72C',   /* Amarelo Gerdau */
+                            gray: '#F4F6F9',     /* Fundo */
+                        },
+                        status: {
+                            operation: '#0047BB', /* Azul Gerdau */
+                            cleaning: '#009045',  /* Verde Industrial */
+                            maintenance: '#FFC72C', /* Amarelo Gerdau */
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7d30c;
+            color: #1F2937;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #002C76 0%, #0047BB 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #E5E7EB;
+        }
+
+        .border-l-operation { border-left: 4px solid #0047BB; }
+        .border-l-cleaning { border-left: 4px solid #009045; }
+        .border-l-maintenance { border-left: 4px solid #FFC72C; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .live-indicator {
+            animation: pulse-ring 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- CABEÇALHO GERAL -->
+    <header class="header-gradient text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4 w-full md:w-auto">
+                <div class="bg-white text-gerdau-blue h-10 w-10 flex items-center justify-center rounded-md shadow-sm transform -skew-x-6 shrink-0">
+                    <i class="fas fa-industry text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold uppercase tracking-wide flex items-center">
+                        GERDAU <span class="mx-2 text-gerdau-yellow text-sm"><i class="fas fa-bolt"></i></span> <span id="main-dashboard-title">Troca de Soleira</span>
+                    </h1>
+                    <div class="text-xs text-blue-100 font-medium">Equipa Mesa 2 &bull; <span id="header-date">09 Abr 2026</span> &bull; Aço que constrói o futuro</div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                <!-- Navegação de Abas -->
+                <nav class="flex space-x-2 bg-blue-900/50 p-1 rounded-lg">
+                    <button id="tab-btn-dashboard" class="px-4 py-1.5 bg-white text-gerdau-blue rounded shadow-sm font-bold text-sm transition-all">
+                        <i class="fas fa-chart-pie mr-1"></i> Dashboard
+                    </button>
+                    <button id="tab-btn-admin" class="px-4 py-1.5 text-white hover:bg-blue-800 rounded font-bold text-sm transition-all">
+                        <i class="fas fa-edit mr-1"></i> Administração
+                    </button>
+                </nav>
+
+                <div id="current-time-container" class="hidden lg:flex items-center bg-blue-900/40 px-3 py-1.5 rounded border border-blue-400/30">
+                    <i class="far fa-clock mr-2 text-blue-200"></i>
+                    <span id="current-time-display" class="font-mono font-semibold tracking-wide">--:--:--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 gap-6">
+        
+        <!-- ================= TELA DE ADMINISTRAÇÃO ================= -->
+        <div id="view-admin" class="hidden space-y-6">
+            
+            <!-- Configurações Gerais -->
+            <section class="bg-white rounded-lg border border-gray-200 card-shadow p-4">
+                <div class="flex items-center justify-between mb-4 border-b pb-2">
+                    <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">
+                        <i class="fas fa-cog text-gerdau-blue mr-2"></i> Configurações Gerais da Parada
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Título do Projeto</label>
+                        <input type="text" id="config-titulo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Data da Parada</label>
+                        <input type="date" id="config-data" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button id="btn-salvar-config" class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded text-sm transition-colors flex items-center shadow-sm">
+                        <i class="fas fa-check mr-2"></i> Salvar Configurações
+                    </button>
+                </div>
+            </section>
+
+            <!-- Gerenciamento de Equipas -->
+            <section class="bg-white rounded-lg border border-gray-200 card-shadow p-4">
+                <div class="flex items-center justify-between mb-4 border-b pb-2">
+                    <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">
+                        <i class="fas fa-users text-gerdau-blue mr-2"></i> Gerenciar Equipes
+                    </h3>
+                </div>
+                
+                <!-- Container de Equipas Existentes -->
+                <div id="admin-teams-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <!-- Gerado via JS -->
+                </div>
+                
+                <!-- Adicionar Nova Equipa -->
+                <div class="border-t pt-4 mt-2">
+                    <h4 class="text-xs font-bold text-gray-600 uppercase mb-2">Adicionar Nova Equipe</h4>
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <input type="text" id="new-team-name" placeholder="Nome da Equipe" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue flex-1">
+                        <input type="text" id="new-team-members" placeholder="Integrantes (Ex: João, Maria)" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue flex-[2]">
+                        <select id="new-team-color" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                            <option value="blue">Azul</option>
+                            <option value="green">Verde</option>
+                            <option value="yellow">Amarelo</option>
+                            <option value="gray">Cinza</option>
+                        </select>
+                        <button id="btn-add-team" class="bg-gerdau-blue hover:bg-blue-800 text-white font-bold py-2 px-4 rounded text-sm transition-colors shadow-sm">
+                            <i class="fas fa-plus mr-1"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Formulário para Nova Atividade -->
+            <section class="bg-white rounded-lg border border-gray-200 card-shadow p-4">
+                <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide mb-4 border-b pb-2">
+                    <i class="fas fa-plus-circle text-gerdau-blue mr-2"></i> Adicionar Nova Atividade
+                </h3>
+                <form id="form-nova-atividade" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-4">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Descrição da Atividade</label>
+                        <input type="text" id="nova-desc" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue" placeholder="Ex: Limpeza da TC-6">
+                    </div>
+                    
+                    <div class="flex gap-2 md:col-span-4">
+                        <div class="w-1/2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Início</label>
+                            <input type="time" id="nova-hora-inicio" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Fim</label>
+                            <input type="time" id="nova-hora-fim" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Equipe</label>
+                        <input type="text" id="nova-equipe" required list="lista-equipes" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue" placeholder="Selecione...">
+                        <datalist id="lista-equipes">
+                            <!-- Gerado via JS dinamicamente com base nas equipes -->
+                        </datalist>
+                    </div>
+                    
+                    <div class="md:col-span-3">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                        <select id="novo-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue">
+                            <option value="operation">Operação</option>
+                            <option value="cleaning">Limpeza</option>
+                            <option value="maintenance">Manutenção</option>
+                        </select>
+                    </div>
+                    
+                    <!-- NOVO CAMPO: IMAGEM -->
+                    <div class="md:col-span-5">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Anexar Imagem (Opcional)</label>
+                        <input type="file" id="nova-imagem" accept="image/*" class="w-full border border-gray-300 rounded px-2 py-[5px] text-sm focus:outline-none focus:border-gerdau-blue file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 bg-white cursor-pointer">
+                    </div>
+
+                    <div class="md:col-span-4 flex justify-end">
+                        <button type="submit" class="bg-gerdau-blue hover:bg-[#002C76] text-white font-bold py-2 px-6 rounded text-sm transition-colors flex items-center shadow-sm w-full md:w-auto justify-center">
+                            <i class="fas fa-save mr-2"></i> Inserir no Cronograma
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Lista de Atividades (Gerenciamento / Remoção) -->
+            <section class="bg-white rounded-lg border border-gray-200 card-shadow p-4">
+                <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide mb-4 border-b pb-2">
+                    <i class="fas fa-list text-gerdau-blue mr-2"></i> Atividades Cadastradas
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-600 font-bold uppercase text-[10px]">
+                            <tr>
+                                <th class="px-4 py-2">Horário</th>
+                                <th class="px-4 py-2">Descrição</th>
+                                <th class="px-4 py-2">Tipo</th>
+                                <th class="px-4 py-2">Equipe</th>
+                                <th class="px-4 py-2 text-center">Imagem</th>
+                                <th class="px-4 py-2 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-activities-list" class="divide-y divide-gray-100">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div> <!-- FIM TELA ADMINISTRAÇÃO -->
+
+
+        <!-- ================= TELA DE DASHBOARD (Visualização) ================= -->
+        <div id="view-dashboard" class="space-y-6">
+
+            <!-- KPIs Principais -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg p-4 border border-gray-200 card-shadow flex flex-col justify-between h-24 relative overflow-hidden">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total de Atividades</p>
+                    <h3 id="total-activities" class="text-3xl font-extrabold text-gray-800">0</h3>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-gray-200 card-shadow flex flex-col justify-between h-24 border-b-4 border-green-600">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Concluídas</p>
+                    <h3 id="completed-activities" class="text-3xl font-extrabold text-green-700">0</h3>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-gray-200 card-shadow flex flex-col justify-between h-24 border-b-4 border-gerdau-blue">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Em Andamento</p>
+                    <h3 id="current-activities" class="text-3xl font-extrabold text-gerdau-blue">0</h3>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-gray-200 card-shadow flex flex-col justify-between h-24 border-b-4 border-gerdau-yellow">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Equipes</p>
+                    <h3 id="total-teams" class="text-3xl font-extrabold text-yellow-600">4</h3>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Timeline -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-t-lg border border-gray-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                            <span class="w-1 h-6 bg-gerdau-blue mr-3 rounded-sm"></span>
+                            Cronograma de Execução (<span class="dynamic-date-short">09/04</span>)
+                        </h2>
+                        
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <select id="team-filter" class="text-sm border border-gray-300 rounded px-3 py-2 bg-gray-50 outline-none">
+                                <option value="all">Todas as Equipes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-x border-b border-gray-200 rounded-b-lg p-6 min-h-[500px]">
+                        <div id="timeline-container" class="relative pl-4">
+                            <div class="timeline-line"></div>
+                            <div id="time-indicator" class="absolute left-0 w-full z-20 pointer-events-none transition-all duration-1000" style="display: none;">
+                                <div class="flex items-center">
+                                    <div class="w-12 border-t-2 border-red-600 relative">
+                                        <div class="absolute right-0 -top-1.5 w-3 h-3 bg-red-600 rounded-full live-indicator"></div>
+                                    </div>
+                                    <div class="w-full border-t border-red-400 border-dashed opacity-50"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Lateral -->
+                <div class="space-y-6">
+                    <!-- Colaboradores por Turno -->
+                    <div class="bg-white rounded-lg border border-gray-200 card-shadow overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Equipes Designadas</h3>
+                        </div>
+                        
+                        <!-- Container dinâmico das equipes -->
+                        <div id="teams-members-container" class="p-4 space-y-4">
+                            <!-- Gerado via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Progresso por Equipe -->
+                    <div class="bg-white rounded-lg border border-gray-200 card-shadow p-4">
+                        <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide mb-4">Progresso das Equipes</h3>
+                        <div id="teams-progress-container" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- FIM TELA DASHBOARD -->
+
+    </main>
+
+    <footer class="mt-8 text-center text-gray-400 text-[10px] pb-6 uppercase tracking-widest">
+        &copy; 2026 Gerdau S.A. - Sistema Interno Mesa 2
+    </footer>
+
+    <!-- Modal de Autenticação -->
+    <div id="password-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg p-6 w-80 shadow-2xl transform transition-all">
+            <div class="flex items-center text-gerdau-dark mb-4">
+                <i class="fas fa-lock text-xl mr-2"></i>
+                <h3 class="font-bold text-lg">Acesso Restrito</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Insira a senha de administrador para gerenciar o dashboard.</p>
+            <input type="password" id="admin-password-input" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 text-sm focus:outline-none focus:border-gerdau-blue focus:ring-1 focus:ring-gerdau-blue transition-all" placeholder="Digite a senha (2019)">
+            <p id="password-error" class="hidden text-red-500 text-[10px] mb-4 font-bold animate-pulse"><i class="fas fa-exclamation-triangle mr-1"></i> Senha incorreta!</p>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" id="btn-cancel-password" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded transition-colors">Cancelar</button>
+                <button type="button" id="btn-submit-password" class="px-4 py-2 text-xs font-bold bg-gerdau-blue text-white rounded hover:bg-blue-800 transition-colors shadow-sm">Acessar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CUSTOMIZADO (ALERTA E CONFIRMAÇÃO) -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-black/60 z-[200] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg p-6 w-80 shadow-2xl transform transition-all text-center">
+            <div id="custom-modal-icon" class="text-4xl mb-3"></div>
+            <h3 id="custom-modal-title" class="font-bold text-lg mb-2 text-gray-800">Atenção</h3>
+            <p id="custom-modal-message" class="text-sm text-gray-500 mb-6"></p>
+            <div id="custom-modal-actions" class="flex justify-center gap-3">
+                <!-- Botões gerados via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA VISUALIZAÇÃO DE IMAGENS EM ECRÃ INTEIRO -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer" onclick="this.classList.add('hidden')">
+        <button type="button" class="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl font-bold">&times;</button>
+        <img id="image-modal-content" src="" class="max-w-full max-h-full rounded-lg shadow-2xl border-4 border-white/20">
+    </div>
+
+    <!-- SCRIPT GERAL -->
+    <script>
+        // CONFIGURAÇÕES GLOBAIS DE DADOS
+        let dashboardTitle = "Carregando...";
+        let EVENT_DATE = new Date();
+
+        let teamsConfig = {};
+        let activities = [];
+
+        // INTEGRAÇÃO COM BACKEND API
+        async function loadDataFromServer() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                dashboardTitle = data.dashboardTitle || "Troca de Soleira";
+                EVENT_DATE = data.EVENT_DATE ? new Date(data.EVENT_DATE) : new Date(2026, 3, 9);
+                
+                if (data.teamsConfig) {
+                    teamsConfig = data.teamsConfig;
+                } else {
+                    teamsConfig = {
+                        "Turno 1": { members: "Luis Fernando, Raissa, Thayanne, Weverton, Lucas, Marcos", color: "blue" },
+                        "Turno 2": { members: "Gabriela, Edmar, Gerald, Valdeir, Rafael, Luis, Eli", color: "green" },
+                        "Turno 3": { members: "Sergio, Victor, Jose M, Kaio, Reginaldo, Rodrigo", color: "gray" },
+                        "Ormec": { members: "Equipa de Limpeza Técnica", color: "yellow" }
+                    };
+                }
+
+                if (data.activities) {
+                    activities = data.activities;
+                } else {
+                    activities = [
+                        { id: 1, time: "00:00 às 07:00", activity: "Completar os estoques de bio", team: "Turno 1", type: "operation", image: null },
+                        { id: 2, time: "07:30 às 14:30", activity: "Realizar limpeza abaixo da mesa 1", team: "Turno 2", type: "cleaning", image: null },
+                        { id: 3, time: "14:30 às 20:00", activity: "Realizar limpeza abaixo da mesa 2", team: "Turno 3", type: "cleaning", image: null },
+                        { id: 4, time: "07:30 às 15:30", activity: "Limpeza da TC 05 e 06", team: "Ormec", type: "cleaning", image: null },
+                        { id: 5, time: "14:30 às 20:00", activity: "Retirada de atiços da TC 330", team: "Turno 3", type: "operation", image: null },
+                        { id: 6, time: "07:30 às 15:30", activity: "Lubrificação dos eixos da mesa", team: "Turno 1", type: "maintenance", image: null }
+                    ];
+                }
+
+                document.getElementById('main-dashboard-title').textContent = dashboardTitle;
+                document.title = `Dashboard de Parada - ${dashboardTitle}`;
+
+                loadConfigToUI();
+                renderTeamMembers();
+                updateTeamFilter();
+                render();
+                if(isAdminAuthenticated) renderAdminList();
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+            }
+        }
+
+        async function saveDataToServer() {
+            try {
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dashboardTitle,
+                        EVENT_DATE: EVENT_DATE.toISOString(),
+                        teamsConfig,
+                        activities
+                    })
+                });
+            } catch (error) {
+                console.error("Erro ao salvar dados:", error);
+                showCustomModal('Erro', 'Não foi possível salvar os dados no servidor.', 'alert');
+            }
+        }
+
+        const typeConfig = {
+            operation: { icon: 'fa-cogs', color: 'text-gerdau-blue', border: 'border-l-operation', label: 'Operação' },
+            cleaning: { icon: 'fa-broom', color: 'text-green-600', border: 'border-l-cleaning', label: 'Limpeza' },
+            maintenance: { icon: 'fa-wrench', color: 'text-yellow-600', border: 'border-l-maintenance', label: 'Manutenção' }
+        };
+
+        // --- SISTEMA DE MODAL PERSONALIZADO E IMAGENS ---
+        function showCustomModal(title, message, type, confirmCallback) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('custom-modal-title').textContent = title;
+            document.getElementById('custom-modal-message').textContent = message;
+            
+            const actionsContainer = document.getElementById('custom-modal-actions');
+            actionsContainer.innerHTML = '';
+            const iconContainer = document.getElementById('custom-modal-icon');
+            
+            if (type === 'confirm') {
+                iconContainer.innerHTML = '<i class="fas fa-question-circle text-gerdau-yellow"></i>';
+                
+                const btnCancel = document.createElement('button');
+                btnCancel.type = 'button';
+                btnCancel.className = 'px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded transition-colors';
+                btnCancel.textContent = 'Cancelar';
+                btnCancel.onclick = () => modal.classList.add('hidden');
+                
+                const btnConfirm = document.createElement('button');
+                btnConfirm.type = 'button';
+                btnConfirm.className = 'px-4 py-2 text-xs font-bold bg-red-600 text-white rounded hover:bg-red-800 transition-colors shadow-sm';
+                btnConfirm.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Confirmar';
+                btnConfirm.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (confirmCallback) confirmCallback();
+                };
+                
+                actionsContainer.appendChild(btnCancel);
+                actionsContainer.appendChild(btnConfirm);
+            } else {
+                // Alerta simples
+                iconContainer.innerHTML = '<i class="fas fa-exclamation-circle text-gerdau-blue"></i>';
+                
+                const btnOk = document.createElement('button');
+                btnOk.type = 'button';
+                btnOk.className = 'px-6 py-2 text-xs font-bold bg-gerdau-blue text-white rounded hover:bg-blue-800 transition-colors shadow-sm';
+                btnOk.textContent = 'OK';
+                btnOk.onclick = () => modal.classList.add('hidden');
+                
+                actionsContainer.appendChild(btnOk);
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        window.showImageModal = function(src) {
+            document.getElementById('image-modal-content').src = src;
+            document.getElementById('image-modal').classList.remove('hidden');
+        };
+
+        // FUNÇÕES DE DATA E HORA
+        function formatDateForInput(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function updateGlobalDateDisplays() {
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            document.getElementById('header-date').textContent = EVENT_DATE.toLocaleDateString('pt-PT', options);
+
+            const dateShort = `${String(EVENT_DATE.getDate()).padStart(2,'0')}/${String(EVENT_DATE.getMonth()+1).padStart(2,'0')}`;
+            document.querySelectorAll('.dynamic-date-short').forEach(el => el.textContent = dateShort);
+        }
+
+        function parseActivityTime(timeStr) {
+            const parts = timeStr.split(' às ');
+            if(parts.length !== 2) return { start: new Date(), end: new Date() };
+
+            const [sh, sm] = parts[0].split(':').map(Number);
+            const [eh, em] = parts[1].split(':').map(Number);
+            
+            const start = new Date(EVENT_DATE);
+            start.setHours(sh, sm, 0);
+            
+            const end = new Date(EVENT_DATE);
+            end.setHours(eh, em, 0);
+            
+            return { start, end };
+        }
+
+        function getStatus(act) {
+            const now = new Date();
+            const { start, end } = parseActivityTime(act.time);
+            
+            if (now < start) return 'pending';
+            if (now > end) return 'completed';
+            return 'current';
+        }
+
+        // CARREGAR E SALVAR CONFIGURAÇÕES GERAIS
+        function loadConfigToUI() {
+            document.getElementById('config-titulo').value = dashboardTitle;
+            document.getElementById('config-data').value = formatDateForInput(EVENT_DATE);
+            renderAdminTeams();
+            updateGlobalDateDisplays();
+        }
+
+        document.getElementById('btn-salvar-config').addEventListener('click', () => {
+            dashboardTitle = document.getElementById('config-titulo').value || "Dashboard de Parada";
+            document.getElementById('main-dashboard-title').textContent = dashboardTitle;
+            document.title = `Dashboard de Parada - ${dashboardTitle}`;
+
+            const dateVal = document.getElementById('config-data').value;
+            if(dateVal) {
+                const [y, m, d] = dateVal.split('-').map(Number);
+                EVENT_DATE = new Date(y, m - 1, d);
+            }
+            
+            for(const teamName in teamsConfig) {
+                const safeId = teamName.replace(/[^a-zA-Z0-9]/g, '-');
+                const input = document.getElementById(`config-team-${safeId}`);
+                if (input) {
+                    teamsConfig[teamName].members = input.value;
+                }
+            }
+
+            updateGlobalDateDisplays();
+            renderTeamMembers();
+            render(); 
+            
+            saveDataToServer();
+            
+            const btn = document.getElementById('btn-salvar-config');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check-double mr-2"></i> Salvo!';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('bg-green-600');
+            }, 2000);
+        });
+
+        // GERENCIAMENTO DE EQUIPES DINÂMICO
+        function renderAdminTeams() {
+            const container = document.getElementById('admin-teams-container');
+            container.innerHTML = '';
+            
+            const colorMap = {
+                blue: 'text-blue-700', green: 'text-green-700', 
+                yellow: 'text-yellow-700', gray: 'text-gray-700'
+            };
+
+            for(const [teamName, config] of Object.entries(teamsConfig)) {
+                const safeId = teamName.replace(/[^a-zA-Z0-9]/g, '-');
+                const textColor = colorMap[config.color] || 'text-gray-700';
+
+                container.innerHTML += `
+                    <div class="border rounded p-3 bg-gray-50/50">
+                        <label class="block text-[11px] font-bold ${textColor} uppercase mb-1 flex justify-between items-center">
+                            ${teamName}
+                            <button type="button" onclick="deleteTeam('${teamName}')" class="text-red-400 hover:text-red-600 transition-colors" title="Apagar Equipe">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </label>
+                        <input type="text" id="config-team-${safeId}" value="${config.members}" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gerdau-blue" placeholder="Integrantes...">
+                    </div>
+                `;
+            }
+            updateTeamDatalist();
+        }
+
+        function updateTeamDatalist() {
+            const datalist = document.getElementById('lista-equipes');
+            datalist.innerHTML = '';
+            for(const teamName in teamsConfig) {
+                const opt = document.createElement('option');
+                opt.value = teamName;
+                datalist.appendChild(opt);
+            }
+        }
+
+        document.getElementById('btn-add-team').addEventListener('click', () => {
+            const name = document.getElementById('new-team-name').value.trim();
+            const members = document.getElementById('new-team-members').value.trim();
+            const color = document.getElementById('new-team-color').value;
+
+            if(!name) { 
+                showCustomModal('Atenção', 'Por favor, indique um nome para a equipe.', 'alert');
+                return; 
+            }
+            if(teamsConfig[name]) { 
+                showCustomModal('Equipe Existente', 'Esta equipe já existe no sistema.', 'alert');
+                return; 
+            }
+
+            teamsConfig[name] = { members: members || "Sem integrantes vinculados", color: color };
+            
+            document.getElementById('new-team-name').value = '';
+            document.getElementById('new-team-members').value = '';
+            
+            renderAdminTeams();
+            renderTeamMembers();
+            updateTeamFilter();
+            
+            saveDataToServer();
+        });
+
+        window.deleteTeam = function(teamName) {
+            showCustomModal(
+                'Apagar Equipe', 
+                `Pretende apagar a equipe "${teamName}"? (As atividades atribuídas a ela continuarão na lista).`,
+                'confirm',
+                () => {
+                    delete teamsConfig[teamName];
+                    renderAdminTeams();
+                    renderTeamMembers();
+                    updateTeamFilter();
+                    saveDataToServer();
+                }
+            );
+        };
+
+
+        // RENDERIZAÇÃO GERAL DO DASHBOARD
+        function renderTeamMembers() {
+            const container = document.getElementById('teams-members-container');
+            container.innerHTML = '';
+            
+            const cssMap = {
+                blue: { border: 'border-blue-500', bg: 'bg-blue-50/50', txt: 'text-blue-700' },
+                green: { border: 'border-green-500', bg: 'bg-green-50/50', txt: 'text-green-700' },
+                gray: { border: 'border-gray-500', bg: 'bg-gray-50', txt: 'text-gray-700' },
+                yellow: { border: 'border-yellow-500', bg: 'bg-yellow-50/50', txt: 'text-yellow-700' }
+            };
+
+            for(const [teamName, config] of Object.entries(teamsConfig)) {
+                const css = cssMap[config.color] || cssMap.gray;
+                container.innerHTML += `
+                    <div class="border-l-4 ${css.border} ${css.bg} p-3">
+                        <span class="text-xs font-bold ${css.txt} block mb-1">${teamName}</span>
+                        <p class="text-xs text-gray-600">${config.members}</p>
+                    </div>
+                `;
+            }
+
+            if(Object.keys(teamsConfig).length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400">Nenhuma equipe cadastrada.</p>';
+            }
+        }
+
+        function render() {
+            const container = document.getElementById('timeline-container');
+            const teamFilter = document.getElementById('team-filter').value;
+            
+            Array.from(container.children).forEach(child => {
+                if (child.id !== 'time-indicator' && !child.classList.contains('timeline-line')) {
+                    container.removeChild(child);
+                }
+            });
+
+            const filtered = activities.filter(a => teamFilter === 'all' || a.team === teamFilter);
+            filtered.sort((a, b) => parseActivityTime(a.time).start - parseActivityTime(b.time).start);
+            
+            filtered.forEach(act => {
+                const status = getStatus(act);
+                const conf = typeConfig[act.type] || typeConfig['operation'];
+                
+                let badge = '';
+                let opacity = 'opacity-100';
+                if (status === 'completed') {
+                    badge = '<span class="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">CONCLUÍDO</span>';
+                } else if (status === 'current') {
+                    badge = '<span class="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded animate-pulse">EM EXECUÇÃO</span>';
+                } else {
+                    badge = '<span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">PENDENTE</span>';
+                    opacity = 'opacity-80';
+                }
+
+                // Elemento de Imagem anexada
+                let imageHtml = '';
+                if (act.image) {
+                    imageHtml = `
+                        <div class="mt-3">
+                            <img src="${act.image}" alt="Anexo da atividade" class="h-32 object-cover rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" onclick="showImageModal('${act.image}')">
+                        </div>
+                    `;
+                }
+
+                const item = document.createElement('div');
+                item.className = `relative pl-12 py-4 ${opacity}`;
+                item.innerHTML = `
+                    <div class="absolute left-[13px] top-8 w-6 h-6 rounded-full border-2 bg-white flex items-center justify-center z-10">
+                        <i class="fas ${conf.icon} text-[10px] ${conf.color}"></i>
+                    </div>
+                    <div class="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow ${conf.border}">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-gray-400 font-mono">${act.time}</span>
+                            ${badge}
+                        </div>
+                        <h4 class="font-bold text-gray-800 text-sm mb-2">${act.activity}</h4>
+                        ${imageHtml}
+                        <div class="flex justify-between items-center text-[11px] font-medium mt-3">
+                            <span class="text-gray-500"><i class="fas fa-users-gear mr-1"></i> ${act.team}</span>
+                            <span class="${conf.color} bg-gray-50 px-2 py-0.5 rounded border uppercase text-[9px]">${conf.label}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            updateKPIs();
+            renderTeamProgress();
+            updateTimeIndicator();
+        }
+
+        function updateKPIs() {
+            document.getElementById('total-activities').textContent = activities.length;
+            document.getElementById('completed-activities').textContent = activities.filter(a => getStatus(a) === 'completed').length;
+            document.getElementById('current-activities').textContent = activities.filter(a => getStatus(a) === 'current').length;
+            document.getElementById('total-teams').textContent = Object.keys(teamsConfig).length;
+        }
+
+        function renderTeamProgress() {
+            const container = document.getElementById('teams-progress-container');
+            container.innerHTML = '';
+            
+            const teamsList = Object.keys(teamsConfig);
+            const teamsFromActivities = [...new Set(activities.map(a => a.team))];
+            const allTeams = [...new Set([...teamsList, ...teamsFromActivities])];
+            
+            allTeams.forEach(t => {
+                const teamActs = activities.filter(a => a.team === t);
+                const done = teamActs.filter(a => getStatus(a) === 'completed').length;
+                const perc = teamActs.length === 0 ? 0 : (done / teamActs.length) * 100;
+                
+                container.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold mb-1">
+                            <span class="text-gray-600">${t}</span>
+                            <span class="text-gray-400">${done}/${teamActs.length}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-gerdau-blue h-full transition-all duration-500" style="width: ${perc}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateTimeIndicator() {
+            const indicator = document.getElementById('time-indicator');
+            const now = new Date();
+            if (now.toDateString() !== EVENT_DATE.toDateString()) {
+                indicator.style.display = 'none';
+                return;
+            }
+            const dayStart = new Date(EVENT_DATE).setHours(0, 0, 0);
+            const dayEnd = new Date(EVENT_DATE).setHours(22, 0, 0); 
+            const total = dayEnd - dayStart;
+            const elapsed = now - dayStart;
+            if (elapsed > 0 && elapsed < total) {
+                indicator.style.display = 'block';
+                indicator.style.top = `${(elapsed / total) * 100}%`;
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        function updateTeamFilter() {
+            const select = document.getElementById('team-filter');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="all">Todas as Equipes</option>';
+            
+            const teams = Object.keys(teamsConfig).sort();
+            teams.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t; opt.textContent = t;
+                select.appendChild(opt);
+            });
+            
+            if (teams.includes(currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // SISTEMA DE ABAS E ADMINISTRAÇÃO
+        let isAdminAuthenticated = false;
+
+        function attemptSwitchToAdmin() {
+            if (isAdminAuthenticated) {
+                switchTab('admin');
+            } else {
+                const modal = document.getElementById('password-modal');
+                modal.classList.remove('hidden');
+                document.getElementById('admin-password-input').value = '';
+                document.getElementById('password-error').classList.add('hidden');
+                setTimeout(() => document.getElementById('admin-password-input').focus(), 100);
+            }
+        }
+
+        function verifyPassword() {
+            const input = document.getElementById('admin-password-input').value;
+            if (input === '2019') { 
+                isAdminAuthenticated = true;
+                document.getElementById('password-modal').classList.add('hidden');
+                switchTab('admin');
+            } else {
+                document.getElementById('password-error').classList.remove('hidden');
+                document.getElementById('admin-password-input').value = '';
+            }
+        }
+
+        function switchTab(tabName) {
+            const viewDashboard = document.getElementById('view-dashboard');
+            const viewAdmin = document.getElementById('view-admin');
+            const btnDashboard = document.getElementById('tab-btn-dashboard');
+            const btnAdmin = document.getElementById('tab-btn-admin');
+
+            if (tabName === 'dashboard') {
+                viewDashboard.classList.remove('hidden');
+                viewAdmin.classList.add('hidden');
+                
+                btnDashboard.classList.replace('text-white', 'text-gerdau-blue');
+                btnDashboard.classList.replace('hover:bg-blue-800', 'bg-white');
+                btnDashboard.classList.add('bg-white', 'shadow-sm');
+                
+                btnAdmin.classList.replace('bg-white', 'hover:bg-blue-800');
+                btnAdmin.classList.replace('text-gerdau-blue', 'text-white');
+                btnAdmin.classList.remove('bg-white', 'shadow-sm');
+                
+                render(); 
+            } else {
+                viewDashboard.classList.add('hidden');
+                viewAdmin.classList.remove('hidden');
+                
+                btnAdmin.classList.replace('text-white', 'text-gerdau-blue');
+                btnAdmin.classList.replace('hover:bg-blue-800', 'bg-white');
+                btnAdmin.classList.add('bg-white', 'shadow-sm');
+                
+                btnDashboard.classList.replace('bg-white', 'hover:bg-blue-800');
+                btnDashboard.classList.replace('text-gerdau-blue', 'text-white');
+                btnDashboard.classList.remove('bg-white', 'shadow-sm');
+
+                renderAdminList();
+            }
+        }
+
+        window.deleteActivity = function(activityId) {
+            showCustomModal(
+                'Remover Atividade',
+                'Tem certeza que deseja remover esta atividade permanentemente?',
+                'confirm',
+                () => {
+                    activities = activities.filter(a => a.id !== activityId);
+                    renderAdminList();
+                    render(); 
+                    updateTeamFilter();
+                    saveDataToServer();
+                }
+            );
+        };
+
+        function renderAdminList() {
+            const tbody = document.getElementById('admin-activities-list');
+            tbody.innerHTML = '';
+            
+            const sorted = [...activities].sort((a, b) => parseActivityTime(a.time).start - parseActivityTime(b.time).start);
+
+            sorted.forEach(act => {
+                const confType = typeConfig[act.type] || { label: 'Desconhecido' };
+                const imageIndicator = act.image ? '<span class="text-blue-500 font-bold" title="Possui Imagem"><i class="fas fa-image"></i> Sim</span>' : '<span class="text-gray-300">-</span>';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-mono text-xs text-gray-500">${act.time}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">${act.activity}</td>
+                        <td class="px-4 py-3 text-[11px] uppercase text-gray-500">${confType.label}</td>
+                        <td class="px-4 py-3 text-xs"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">${act.team}</span></td>
+                        <td class="px-4 py-3 text-[11px] text-center">${imageIndicator}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button type="button" onclick="deleteActivity(${act.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors text-[11px] font-bold shadow-sm" title="Remover Atividade">
+                                <i class="fas fa-trash-alt mr-1"></i> Excluir
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(activities.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400 text-sm">Nenhuma atividade cadastrada.</td></tr>';
+            }
+        }
+
+        // EVENTOS GLOBAIS E INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            loadDataFromServer();
+            
+            document.getElementById('tab-btn-dashboard').addEventListener('click', () => switchTab('dashboard'));
+            document.getElementById('tab-btn-admin').addEventListener('click', attemptSwitchToAdmin);
+
+            document.getElementById('btn-cancel-password').addEventListener('click', () => {
+                document.getElementById('password-modal').classList.add('hidden');
+            });
+            document.getElementById('btn-submit-password').addEventListener('click', verifyPassword);
+            document.getElementById('admin-password-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') verifyPassword();
+            });
+
+            setInterval(() => {
+                document.getElementById('current-time-display').textContent = new Date().toLocaleTimeString('pt-PT');
+            }, 1000);
+            
+            document.getElementById('team-filter').addEventListener('change', render);
+
+            document.getElementById('form-nova-atividade').addEventListener('submit', function(e) {
+                e.preventDefault(); 
+                
+                const desc = document.getElementById('nova-desc').value;
+                const start = document.getElementById('nova-hora-inicio').value;
+                const end = document.getElementById('nova-hora-fim').value;
+                const team = document.getElementById('nova-equipe').value;
+                const type = document.getElementById('novo-tipo').value;
+                const imageInput = document.getElementById('nova-imagem');
+                
+                if(!start || !end) {
+                    showCustomModal('Atenção', 'Por favor, preencha o horário de início e fim.', 'alert');
+                    return;
+                }
+
+                const timeStr = `${start} às ${end}`;
+                const newId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
+                
+                // Função auxiliar para inserir a atividade e atualizar o ecrã
+                const addActivityToSystem = (imageData) => {
+                    activities.push({
+                        id: newId,
+                        time: timeStr,
+                        activity: desc,
+                        team: team,
+                        type: type,
+                        image: imageData
+                    });
+
+                    if(!teamsConfig[team]) {
+                        teamsConfig[team] = { members: "Integrantes não informados", color: "gray" };
+                        renderAdminTeams();
+                        renderTeamMembers();
+                    }
+                    
+                    updateTeamFilter();
+                    render();
+                    renderAdminList(); 
+                    
+                    document.getElementById('form-nova-atividade').reset();
+                    saveDataToServer();
+                };
+
+                // Lógica de leitura de imagem
+                if (imageInput.files && imageInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        addActivityToSystem(event.target.result); // Passa a imagem convertida para Base64
+                    };
+                    reader.readAsDataURL(imageInput.files[0]);
+                } else {
+                    addActivityToSystem(null); // Sem imagem anexada
+                }
+            });
+        });
+    </script>
+</body>
+</html>
