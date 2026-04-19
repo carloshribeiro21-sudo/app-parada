@@ -40,6 +40,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- html2pdf.js para Exportação em PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- html2canvas para Exportação em PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -76,9 +82,16 @@
         .live-indicator {
             animation: pulse-ring 2s infinite;
         }
+        
+        /* Toast Animations */
+        .toast-enter { transform: translateX(0); opacity: 1; }
+        .toast-exit { transform: translateX(100%); opacity: 0; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
+
+    <!-- TOAST NOTIFICATIONS (Alertas flutuantes) -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 overflow-hidden pointer-events-none"></div>
 
     <!-- CABEÇALHO GERAL -->
     <header class="header-gradient text-white shadow-lg sticky top-0 z-50">
@@ -220,8 +233,17 @@
                         <input type="file" id="nova-imagem" accept="image/*" class="w-full border border-gray-300 rounded px-2 py-[5px] text-sm focus:outline-none focus:border-gerdau-blue file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 bg-white cursor-pointer">
                     </div>
 
+                    <!-- NOVO CAMPO: OBSERVAÇÕES -->
+                    <div class="md:col-span-12">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Observações (Opcional)</label>
+                        <textarea id="nova-obs" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gerdau-blue" placeholder="Adicione instruções, ferramentas necessárias ou notas sobre segurança..."></textarea>
+                    </div>
+
                     <div class="md:col-span-4 flex justify-end">
                         <button type="submit" class="bg-gerdau-blue hover:bg-[#002C76] text-white font-bold py-2 px-6 rounded text-sm transition-colors flex items-center shadow-sm w-full md:w-auto justify-center">
+                    <div class="md:col-span-4 flex justify-end gap-2">
+                        <button type="button" id="btn-cancel-edit" class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors shadow-sm">Cancelar</button>
+                        <button type="submit" id="btn-submit-atividade" class="bg-gerdau-blue hover:bg-[#002C76] text-white font-bold py-2 px-6 rounded text-sm transition-colors flex items-center shadow-sm w-full md:w-auto justify-center">
                             <i class="fas fa-save mr-2"></i> Inserir no Cronograma
                         </button>
                     </div>
@@ -287,10 +309,28 @@
                             Cronograma de Execução (<span class="dynamic-date-short">09/04</span>)
                         </h2>
                         
-                        <div class="flex gap-2 w-full sm:w-auto">
+                        <div class="flex flex-wrap justify-end gap-2 w-full sm:w-auto">
                             <select id="team-filter" class="text-sm border border-gray-300 rounded px-3 py-2 bg-gray-50 outline-none">
                                 <option value="all">Todas as Equipes</option>
                             </select>
+                            <select id="type-filter" class="text-sm border border-gray-300 rounded px-3 py-2 bg-gray-50 outline-none">
+                                <option value="all">Todos os Tipos</option>
+                                <option value="operation">Operação</option>
+                                <option value="cleaning">Limpeza</option>
+                                <option value="maintenance">Manutenção</option>
+                            </select>
+                            <select id="status-filter" class="text-sm border border-gray-300 rounded px-3 py-2 bg-gray-50 outline-none">
+                                <option value="all">Todos os Status</option>
+                                <option value="pending">Pendente</option>
+                                <option value="current">Em Andamento</option>
+                                <option value="completed">Concluído</option>
+                            </select>
+                            <button id="btn-export-png" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold py-2 px-3 rounded shadow-sm transition-colors" title="Exportar para Imagem (PNG)">
+                                <i class="fas fa-file-image"></i>
+                            </button>
+                            <button id="btn-export-pdf" class="bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded shadow-sm transition-colors" title="Exportar para PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -347,7 +387,7 @@
                 <h3 class="font-bold text-lg">Acesso Restrito</h3>
             </div>
             <p class="text-xs text-gray-500 mb-4">Insira a senha de administrador para gerenciar o dashboard.</p>
-            <input type="password" id="admin-password-input" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 text-sm focus:outline-none focus:border-gerdau-blue focus:ring-1 focus:ring-gerdau-blue transition-all" placeholder="Digite a senha (2019)">
+            <input type="password" id="admin-password-input" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 text-sm focus:outline-none focus:border-gerdau-blue focus:ring-1 focus:ring-gerdau-blue transition-all" placeholder="Digite a senha ">
             <p id="password-error" class="hidden text-red-500 text-[10px] mb-4 font-bold animate-pulse"><i class="fas fa-exclamation-triangle mr-1"></i> Senha incorreta!</p>
             <div class="flex justify-end gap-2 mt-4">
                 <button type="button" id="btn-cancel-password" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded transition-colors">Cancelar</button>
@@ -382,6 +422,7 @@
 
         let teamsConfig = {};
         let activities = [];
+        let editingActivityId = null;
 
         // INTEGRAÇÃO COM BACKEND API
         async function loadDataFromServer() {
@@ -407,12 +448,12 @@
                     activities = data.activities;
                 } else {
                     activities = [
-                        { id: 1, time: "00:00 às 07:00", activity: "Completar os estoques de bio", team: "Turno 1", type: "operation", image: null },
-                        { id: 2, time: "07:30 às 14:30", activity: "Realizar limpeza abaixo da mesa 1", team: "Turno 2", type: "cleaning", image: null },
-                        { id: 3, time: "14:30 às 20:00", activity: "Realizar limpeza abaixo da mesa 2", team: "Turno 3", type: "cleaning", image: null },
-                        { id: 4, time: "07:30 às 15:30", activity: "Limpeza da TC 05 e 06", team: "Ormec", type: "cleaning", image: null },
-                        { id: 5, time: "14:30 às 20:00", activity: "Retirada de atiços da TC 330", team: "Turno 3", type: "operation", image: null },
-                        { id: 6, time: "07:30 às 15:30", activity: "Lubrificação dos eixos da mesa", team: "Turno 1", type: "maintenance", image: null }
+                        { id: 1, time: "00:00 às 07:00", activity: "Completar os estoques de bio", team: "Turno 1", type: "operation", image: null, obs: "Uso obrigatório de EPI completo." },
+                        { id: 2, time: "07:30 às 14:30", activity: "Realizar limpeza abaixo da mesa 1", team: "Turno 2", type: "cleaning", image: null, obs: "" },
+                        { id: 3, time: "14:30 às 20:00", activity: "Realizar limpeza abaixo da mesa 2", team: "Turno 3", type: "cleaning", image: null, obs: "" },
+                        { id: 4, time: "07:30 às 15:30", activity: "Limpeza da TC 05 e 06", team: "Ormec", type: "cleaning", image: null, obs: "Atenção às válvulas de bloqueio." },
+                        { id: 5, time: "14:30 às 20:00", activity: "Retirada de atiços da TC 330", team: "Turno 3", type: "operation", image: null, obs: "" },
+                        { id: 6, time: "07:30 às 15:30", activity: "Lubrificação dos eixos da mesa", team: "Turno 1", type: "maintenance", image: null, obs: "" }
                     ];
                 }
 
@@ -443,7 +484,7 @@
                 });
             } catch (error) {
                 console.error("Erro ao salvar dados:", error);
-                showCustomModal('Erro', 'Não foi possível salvar os dados no servidor.', 'alert');
+                showToast('Erro: Não foi possível sincronizar com o servidor.', 'error');
             }
         }
 
@@ -497,6 +538,22 @@
             }
             
             modal.classList.remove('hidden');
+        }
+
+        // SISTEMA DE TOAST NOTIFICATIONS
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            
+            toast.className = `${bgColor} text-white px-4 py-3 rounded shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full opacity-0`;
+            toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span class="text-sm font-bold">${message}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
+            
+            setTimeout(() => { toast.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
         window.showImageModal = function(src) {
@@ -577,6 +634,7 @@
             render(); 
             
             saveDataToServer();
+            showToast('Configurações salvas com sucesso!', 'success');
             
             const btn = document.getElementById('btn-salvar-config');
             const originalHtml = btn.innerHTML;
@@ -633,11 +691,11 @@
             const color = document.getElementById('new-team-color').value;
 
             if(!name) { 
-                showCustomModal('Atenção', 'Por favor, indique um nome para a equipe.', 'alert');
+                showToast('Por favor, indique um nome para a equipe.', 'error');
                 return; 
             }
             if(teamsConfig[name]) { 
-                showCustomModal('Equipe Existente', 'Esta equipe já existe no sistema.', 'alert');
+                showToast('Esta equipe já existe no sistema.', 'error');
                 return; 
             }
 
@@ -651,6 +709,7 @@
             updateTeamFilter();
             
             saveDataToServer();
+            showToast('Nova equipe adicionada com sucesso!', 'success');
         });
 
         window.deleteTeam = function(teamName) {
@@ -664,6 +723,7 @@
                     renderTeamMembers();
                     updateTeamFilter();
                     saveDataToServer();
+                    showToast(`Equipe ${teamName} removida.`, 'success');
                 }
             );
         };
@@ -699,6 +759,8 @@
         function render() {
             const container = document.getElementById('timeline-container');
             const teamFilter = document.getElementById('team-filter').value;
+            const typeFilter = document.getElementById('type-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
             
             Array.from(container.children).forEach(child => {
                 if (child.id !== 'time-indicator' && !child.classList.contains('timeline-line')) {
@@ -706,7 +768,13 @@
                 }
             });
 
-            const filtered = activities.filter(a => teamFilter === 'all' || a.team === teamFilter);
+            const filtered = activities.filter(a => {
+                const s = getStatus(a);
+                const matchTeam = teamFilter === 'all' || a.team === teamFilter;
+                const matchType = typeFilter === 'all' || a.type === typeFilter;
+                const matchStatus = statusFilter === 'all' || s === statusFilter;
+                return matchTeam && matchType && matchStatus;
+            });
             filtered.sort((a, b) => parseActivityTime(a.time).start - parseActivityTime(b.time).start);
             
             filtered.forEach(act => {
@@ -734,6 +802,11 @@
                     `;
                 }
 
+                let obsHtml = '';
+                if (act.obs) {
+                    obsHtml = `<p class="text-[11px] text-gray-500 mt-2 bg-gray-50 p-2 rounded border border-gray-100 italic"><i class="fas fa-info-circle mr-1"></i> ${act.obs}</p>`;
+                }
+
                 const item = document.createElement('div');
                 item.className = `relative pl-12 py-4 ${opacity}`;
                 item.innerHTML = `
@@ -747,6 +820,7 @@
                         </div>
                         <h4 class="font-bold text-gray-800 text-sm mb-2">${act.activity}</h4>
                         ${imageHtml}
+                        ${obsHtml}
                         <div class="flex justify-between items-center text-[11px] font-medium mt-3">
                             <span class="text-gray-500"><i class="fas fa-users-gear mr-1"></i> ${act.team}</span>
                             <span class="${conf.color} bg-gray-50 px-2 py-0.5 rounded border uppercase text-[9px]">${conf.label}</span>
@@ -846,15 +920,26 @@
             }
         }
 
-        function verifyPassword() {
+        async function verifyPassword() {
             const input = document.getElementById('admin-password-input').value;
-            if (input === '2019') { 
-                isAdminAuthenticated = true;
-                document.getElementById('password-modal').classList.add('hidden');
-                switchTab('admin');
-            } else {
-                document.getElementById('password-error').classList.remove('hidden');
-                document.getElementById('admin-password-input').value = '';
+            document.getElementById('password-error').classList.add('hidden');
+            
+            try {
+                // AQUI: Futuramente usar o backend para validar: const res = await fetch('/api/auth', ...)
+                
+                if (input === '2019') { 
+                    isAdminAuthenticated = true;
+                    document.getElementById('password-modal').classList.add('hidden');
+                    document.getElementById('admin-password-input').value = '';
+                    switchTab('admin');
+                    showToast('Autenticado com sucesso!', 'success');
+                } else {
+                    document.getElementById('password-error').classList.remove('hidden');
+                    document.getElementById('admin-password-input').value = '';
+                }
+            } catch (e) {
+                console.error("Erro na validação", e);
+                showToast('Erro ao validar senha no servidor', 'error');
             }
         }
 
@@ -908,6 +993,45 @@
             );
         };
 
+        window.editActivity = function(activityId) {
+            const act = activities.find(a => a.id === activityId);
+            if (!act) return;
+
+            editingActivityId = activityId;
+
+            document.getElementById('nova-desc').value = act.activity;
+            
+            const timeParts = act.time.split(' às ');
+            if (timeParts.length === 2) {
+                document.getElementById('nova-hora-inicio').value = timeParts[0];
+                document.getElementById('nova-hora-fim').value = timeParts[1];
+            }
+            
+            document.getElementById('nova-equipe').value = act.team;
+            document.getElementById('novo-tipo').value = act.type;
+            document.getElementById('nova-obs').value = act.obs || '';
+            
+            const btnSubmit = document.getElementById('btn-submit-atividade');
+            btnSubmit.innerHTML = '<i class="fas fa-check mr-2"></i> Salvar Alterações';
+            btnSubmit.classList.replace('bg-gerdau-blue', 'bg-green-600');
+            btnSubmit.classList.replace('hover:bg-[#002C76]', 'hover:bg-green-700');
+            
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('form-nova-atividade').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        function cancelEdit() {
+            editingActivityId = null;
+            document.getElementById('form-nova-atividade').reset();
+            
+            const btnSubmit = document.getElementById('btn-submit-atividade');
+            btnSubmit.innerHTML = '<i class="fas fa-save mr-2"></i> Inserir no Cronograma';
+            btnSubmit.classList.replace('bg-green-600', 'bg-gerdau-blue');
+            btnSubmit.classList.replace('hover:bg-green-700', 'hover:bg-[#002C76]');
+            
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
         function renderAdminList() {
             const tbody = document.getElementById('admin-activities-list');
             tbody.innerHTML = '';
@@ -926,6 +1050,9 @@
                         <td class="px-4 py-3 text-xs"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">${act.team}</span></td>
                         <td class="px-4 py-3 text-[11px] text-center">${imageIndicator}</td>
                         <td class="px-4 py-3 text-right">
+                            <button type="button" onclick="editActivity(${act.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors text-[11px] font-bold shadow-sm mr-1" title="Editar Atividade">
+                                <i class="fas fa-edit mr-1"></i> Editar
+                            </button>
                             <button type="button" onclick="deleteActivity(${act.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors text-[11px] font-bold shadow-sm" title="Remover Atividade">
                                 <i class="fas fa-trash-alt mr-1"></i> Excluir
                             </button>
@@ -944,6 +1071,8 @@
             
             loadDataFromServer();
             
+            document.getElementById('btn-cancel-edit').addEventListener('click', cancelEdit);
+
             document.getElementById('tab-btn-dashboard').addEventListener('click', () => switchTab('dashboard'));
             document.getElementById('tab-btn-admin').addEventListener('click', attemptSwitchToAdmin);
 
@@ -960,6 +1089,42 @@
             }, 1000);
             
             document.getElementById('team-filter').addEventListener('change', render);
+            document.getElementById('type-filter').addEventListener('change', render);
+            document.getElementById('status-filter').addEventListener('change', render);
+
+            // Funcionalidade de Exportação PNG
+            document.getElementById('btn-export-png').addEventListener('click', () => {
+                showToast('Gerando Imagem, por favor aguarde...', 'success');
+                const element = document.getElementById('view-dashboard');
+                html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Cronograma_Parada_${formatDateForInput(EVENT_DATE)}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast('Imagem gerada com sucesso!', 'success');
+                }).catch(err => {
+                    showToast('Erro ao gerar imagem.', 'error');
+                });
+            });
+
+            // Funcionalidade de Exportação PDF
+            document.getElementById('btn-export-pdf').addEventListener('click', () => {
+                showToast('Gerando PDF, por favor aguarde...', 'success');
+                const element = document.getElementById('view-dashboard');
+                const opt = {
+                    margin:       [10, 10, 10, 10],
+                    filename:     `Cronograma_Parada_${formatDateForInput(EVENT_DATE)}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' } // Formato A3 Paisagem acomoda melhor os elementos do dashboard
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    showToast('PDF gerado com sucesso!', 'success');
+                }).catch(err => {
+                    showToast('Erro ao gerar PDF.', 'error');
+                });
+            });
 
             document.getElementById('form-nova-atividade').addEventListener('submit', function(e) {
                 e.preventDefault(); 
@@ -969,26 +1134,55 @@
                 const end = document.getElementById('nova-hora-fim').value;
                 const team = document.getElementById('nova-equipe').value;
                 const type = document.getElementById('novo-tipo').value;
+                const obs = document.getElementById('nova-obs').value;
                 const imageInput = document.getElementById('nova-imagem');
                 
                 if(!start || !end) {
-                    showCustomModal('Atenção', 'Por favor, preencha o horário de início e fim.', 'alert');
+                    showToast('Por favor, preencha o horário de início e fim.', 'error');
+                    return;
+                }
+                
+                if(start >= end) {
+                    showToast('O horário de fim deve ser posterior ao horário de início!', 'error');
+                    document.getElementById('nova-hora-fim').focus();
+                    return;
+                }
+
+                if(!team) {
+                    showToast('Selecione uma equipe responsável.', 'error');
                     return;
                 }
 
                 const timeStr = `${start} às ${end}`;
                 const newId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
                 
-                // Função auxiliar para inserir a atividade e atualizar o ecrã
-                const addActivityToSystem = (imageData) => {
-                    activities.push({
-                        id: newId,
-                        time: timeStr,
-                        activity: desc,
-                        team: team,
-                        type: type,
-                        image: imageData
-                    });
+                // Função auxiliar para salvar a atividade e atualizar o ecrã
+                const saveActivityData = (imageData) => {
+                    if (editingActivityId) {
+                        const index = activities.findIndex(a => a.id === editingActivityId);
+                        if (index !== -1) {
+                            activities[index].time = timeStr;
+                            activities[index].activity = desc;
+                            activities[index].team = team;
+                            activities[index].type = type;
+                            activities[index].obs = obs;
+                            if (imageData !== "KEEP_OLD") {
+                                activities[index].image = imageData;
+                            }
+                        }
+                        showToast('Atividade atualizada com sucesso!', 'success');
+                    } else {
+                        activities.push({
+                            id: newId,
+                            time: timeStr,
+                            activity: desc,
+                            team: team,
+                            type: type,
+                            obs: obs,
+                            image: imageData === "KEEP_OLD" ? null : imageData
+                        });
+                        showToast('Atividade adicionada com sucesso!', 'success');
+                    }
 
                     if(!teamsConfig[team]) {
                         teamsConfig[team] = { members: "Integrantes não informados", color: "gray" };
@@ -1000,7 +1194,11 @@
                     render();
                     renderAdminList(); 
                     
-                    document.getElementById('form-nova-atividade').reset();
+                    if (editingActivityId) {
+                        cancelEdit();
+                    } else {
+                        document.getElementById('form-nova-atividade').reset();
+                    }
                     saveDataToServer();
                 };
 
@@ -1008,14 +1206,15 @@
                 if (imageInput.files && imageInput.files[0]) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        addActivityToSystem(event.target.result); // Passa a imagem convertida para Base64
+                        saveActivityData(event.target.result); 
                     };
                     reader.readAsDataURL(imageInput.files[0]);
                 } else {
-                    addActivityToSystem(null); // Sem imagem anexada
+                    saveActivityData("KEEP_OLD"); 
                 }
             });
         });
     </script>
 </body>
 </html>
+
