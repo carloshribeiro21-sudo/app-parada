@@ -1,24 +1,30 @@
 {
   "configuracao": {
     "titulo": "Parada da Mesa",
-    "data": "23/04/2026"
+    "data": "23/04/2026",
+    "total_atividades": 15,
+    "total_equipes": 7
   },
   "equipes": [
     {
       "nome": "ORMEC",
+      "descricao": "Equipa de Limpeza Técnica",
       "integrantes": ["Equipa de Limpeza Técnica"]
     },
     {
       "nome": "SERVITEC",
+      "descricao": "Equipa de Limpeza Técnica",
       "integrantes": ["Equipa de Limpeza Técnica"]
     },
     {
       "nome": "MANUTENÇÃO",
-      "integrantes": ["Sem integrantes vinculados"]
+      "descricao": "Sem integrantes vinculados",
+      "integrantes": []
     },
     {
       "nome": "QUALITEC",
-      "integrantes": ["Sem integrantes vinculados"]
+      "descricao": "Sem integrantes vinculados",
+      "integrantes": []
     },
     {
       "nome": "TURNO 1",
@@ -31,6 +37,116 @@
     {
       "nome": "TURNO 3",
       "integrantes": ["José R", "Rodrigo", "Reginaldo"]
+    }
+  ],
+  "atividades": [
+    {
+      "horario": "06:00 às 07:00",
+      "descricao": "Iniciar a limpeza da rotativa 301",
+      "tipo": "LIMPEZA",
+      "equipe": "TURNO 1",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "06:30 às 07:00",
+      "descricao": "Bloqueio da mesa 2",
+      "tipo": "OPERAÇÃO",
+      "equipe": "TURNO 1",
+      "status": "PENDENTE",
+      "detalhes": "Deixam mesa basculada com os bloqueios físicos"
+    },
+    {
+      "horario": "07:00 às 09:00",
+      "descricao": "Limpeza abaixo da mesa 2",
+      "tipo": "OPERAÇÃO",
+      "equipe": "ORMEC",
+      "status": "PENDENTE",
+      "imagem": "Sim"
+    },
+    {
+      "horario": "07:00 às 09:00",
+      "descricao": "Dar continuidade na limpeza da RT 301",
+      "tipo": "LIMPEZA",
+      "equipe": "TURNO 2",
+      "status": "PENDENTE",
+      "imagem": "Sim"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Instalação de chapa próximo ao corrimão na mesa",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Fixação de borracha na mesa",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Instalação de chapa na mesa basculadora",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Reparo nas proteções da TC 331",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Instalação de suportes e roletes na TR 40",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "QUALITEC",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Troca da peneira PV328",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Troca da RT 301",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "MANUTENÇÃO",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Limpeza na TC 329 e 330",
+      "tipo": "LIMPEZA",
+      "equipe": "SERVITEC",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Troca de roletes",
+      "tipo": "MANUTENÇÃO",
+      "equipe": "QUALITEC",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "09:00 às 17:00",
+      "descricao": "Limpeza do corredor",
+      "tipo": "LIMPEZA",
+      "equipe": "TURNO 2",
+      "status": "PENDENTE"
+    },
+    {
+      "horario": "14:15 às 17:00",
+      "descricao": "Teste e desbloqueio dos equipamentos",
+      "tipo": "OPERAÇÃO",
+      "equipe": "TURNO 3",
+      "status": "PENDENTE"
     }
   ]
 }
