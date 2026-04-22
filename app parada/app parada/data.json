@@ -1,155 +1,36 @@
 {
   "configuracao": {
     "titulo": "Parada da Mesa",
-    "data": "2026-04-23",
-    "total_atividades": 15,
-    "equipes_total": 7
+    "data": "23/04/2026"
   },
   "equipes": [
     {
-      "nome": "Turno 1",
-      "integrantes": ["Luis Fernando", "Raissa", "Thayanne", "Weverton", "Lucas", "Marcos"],
-      "cor": "Azul"
+      "nome": "ORMEC",
+      "integrantes": ["Equipa de Limpeza Técnica"]
     },
     {
-      "nome": "Turno 2",
-      "integrantes": ["Gabriela", "Edmar", "Gerald", "Valdeir", "Rafael", "Luis", "Eli"],
-      "cor": "Azul"
+      "nome": "SERVITEC",
+      "integrantes": ["Equipa de Limpeza Técnica"]
     },
     {
-      "nome": "Turno 3",
-      "integrantes": ["Sergio", "Victor", "Jose M", "Kaio", "Reginaldo", "Rodrigo"],
-      "cor": "Azul"
+      "nome": "MANUTENÇÃO",
+      "integrantes": ["Sem integrantes vinculados"]
     },
     {
-      "nome": "Ormec",
-      "descricao": "Equipa de Limpeza Técnica",
-      "cor": "Amarelo"
+      "nome": "QUALITEC",
+      "integrantes": ["Sem integrantes vinculados"]
     },
     {
-      "nome": "Servitec",
-      "descricao": "Equipa de Limpeza Técnica",
-      "cor": "Amarelo"
+      "nome": "TURNO 1",
+      "integrantes": ["Weverton", "Raissa", "Thayanne"]
     },
     {
-      "nome": "Manutenção",
-      "descricao": "Sem integrantes vinculados",
-      "cor": "Verde"
+      "nome": "TURNO 2",
+      "integrantes": ["Valdeir", "Edmar", "Gabriela"]
     },
     {
-      "nome": "Qualitec",
-      "descricao": "Sem integrantes vinculados",
-      "cor": "Verde"
-    }
-  ],
-  "atividades": [
-    {
-      "horario": "06:00 às 07:00",
-      "descricao": "Iniciar a limpeza da rotativa 301",
-      "tipo": "LIMPEZA",
-      "equipe": "Turno 1",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "06:30 às 07:00",
-      "descricao": "Bloqueio da mesa 2",
-      "tipo": "OPERAÇÃO",
-      "equipe": "Turno 1",
-      "status": "PENDENTE",
-      "observacao": "Deixam mesa basculada com os bloqueios físicos"
-    },
-    {
-      "horario": "07:00 às 09:00",
-      "descricao": "Limpeza abaixo da mesa 2",
-      "tipo": "OPERAÇÃO",
-      "equipe": "Ormec",
-      "status": "PENDENTE",
-      "imagem": true
-    },
-    {
-      "horario": "07:00 às 09:00",
-      "descricao": "Dar continuidade na limpeza da RT 301",
-      "tipo": "LIMPEZA",
-      "equipe": "Turno 2",
-      "status": "PENDENTE",
-      "imagem": true
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Instalação de chapa próximo ao corrimão na mesa",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Fixação de borracha na mesa",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Instalação de chapa na mesa basculadora",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Reparo nas proteções da TC 331",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Instalação de suportes e roletes na TR 40",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Qualitec",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Troca da peneira PV328",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Troca da RT 301",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Manutenção",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Limpeza na TC 329 e 330",
-      "tipo": "LIMPEZA",
-      "equipe": "Servitec",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Troca de roletes",
-      "tipo": "MANUTENÇÃO",
-      "equipe": "Qualitec",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "09:00 às 17:00",
-      "descricao": "Limpeza do corredor",
-      "tipo": "LIMPEZA",
-      "equipe": "Turno 2",
-      "status": "PENDENTE"
-    },
-    {
-      "horario": "14:15 às 17:00",
-      "descricao": "Teste e desbloqueio dos equipamentos",
-      "tipo": "OPERAÇÃO",
-      "equipe": "Turno 3",
-      "status": "PENDENTE"
+      "nome": "TURNO 3",
+      "integrantes": ["José R", "Rodrigo", "Reginaldo"]
     }
   ]
 }
